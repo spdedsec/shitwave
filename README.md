@@ -152,11 +152,13 @@ The executable installs under the normal CMake `bin` destination.
 
 ```text
 shitwave/
-├── src/
-│   └── main.cpp          # the entire game
+├── source/
+│   └── main.cpp          # the native X11 game
+├── web/                  # playable static browser build
 ├── assets/               # reserved for future art/audio
 ├── CMakeLists.txt        # CMake build
 ├── Makefile              # dead-simple build
+├── .github/workflows/    # CI, Pages deploy, release automation
 ├── LICENSE               # MIT
 ├── README.md             # this file
 └── .gitignore
@@ -298,27 +300,18 @@ Use GitHub Issues for bugs and GitHub Discussions if you want people to throw fe
 
 ### Releases
 
-Use **GitHub Releases** for downloadable builds.
+Use **GitHub Releases** for downloadable builds and publish the static browser build with **GitHub Pages**.
 
 A sensible release layout:
 
 ```text
 SHITWAVE-v1.0.0-linux-x86_64.tar.gz
-SHITWAVE-v1.0.0-source.tar.gz
+SHITWAVE-v1.0.0-web.tar.gz
 ```
 
-Later, add:
+### Static playable website
 
-```text
-SHITWAVE-v1.0.0-windows-x86_64.zip
-SHITWAVE-v1.0.0-linux-arm64.tar.gz
-```
-
-### Vercel?
-
-**No.** Vercel is mainly for web apps and serverless web workloads. This project is a native desktop binary, so hosting the executable itself on Vercel would just be adding bullshit where none is needed.
-
-If you later port SHITWAVE to WebAssembly/WebGL, **then** a static host such as GitHub Pages, Cloudflare Pages, Netlify, or Vercel makes sense.
+The `web/` directory is a no-build static game build. It is deployed directly to GitHub Pages by `.github/workflows/pages.yml`.
 
 ### Itch.io
 
@@ -361,12 +354,14 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j
 ```
 
-Then package the executable:
+Then package both native + static web builds:
 
 ```bash
 mkdir -p dist/SHITWAVE-v1.0.0-linux-x86_64
 cp build/shitwave dist/SHITWAVE-v1.0.0-linux-x86_64/
 tar -C dist -czf dist/SHITWAVE-v1.0.0-linux-x86_64.tar.gz SHITWAVE-v1.0.0-linux-x86_64
+cp -r web dist/SHITWAVE-v1.0.0-web
+tar -C dist -czf dist/SHITWAVE-v1.0.0-web.tar.gz SHITWAVE-v1.0.0-web
 ```
 
 Create a GitHub release with:
@@ -374,24 +369,29 @@ Create a GitHub release with:
 ```bash
 gh release create v1.0.0 \
   dist/SHITWAVE-v1.0.0-linux-x86_64.tar.gz \
+  dist/SHITWAVE-v1.0.0-web.tar.gz \
   --title "SHITWAVE v1.0.0" \
   --notes "First public release. Try not to die like an idiot."
 ```
+
+Or use the automated release workflow by pushing a version tag:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+That triggers `.github/workflows/release.yml`, which builds and publishes both release assets.
 
 ---
 
 ## 13. CI / automated builds
 
-For serious distribution, add GitHub Actions later.
+GitHub Actions is already configured:
 
-The basic Linux CI job should:
-
-1. check out the repo
-2. install X11 development packages
-3. configure CMake
-4. compile in Release mode
-5. run a smoke/build test
-6. upload the binary as an artifact
+1. `.github/workflows/build.yml` builds and smoke-tests the Linux binary on pushes/PRs.
+2. `.github/workflows/pages.yml` deploys `web/` to GitHub Pages from `main`.
+3. `.github/workflows/release.yml` creates tagged GitHub releases with Linux + web archives.
 
 For Windows/macOS, I recommend doing the SDL3 port first rather than trying to force X11 concepts onto those platforms.
 
