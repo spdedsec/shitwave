@@ -1,0 +1,15 @@
+SHITWAVE — quickest possible start
+
+1. On Linux, install X11 runtime support if it is not already present.
+2. Run:
+
+   ./shitwave
+
+If your desktop refuses to execute it:
+
+   chmod +x shitwave
+   ./shitwave
+
+Source is in source/main.cpp. Full developer instructions are in README.md.
+
+Primary target: Linux x86_64 + X11.
