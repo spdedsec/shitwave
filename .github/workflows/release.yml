@@ -1,0 +1,67 @@
+name: Release SHITWAVE
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release tag (example: v1.0.0)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ inputs.version }}"
+          else
+            TAG="${GITHUB_REF_NAME}"
+          fi
+          VERSION="${TAG#v}"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Install build dependencies
+        run: sudo apt-get update && sudo apt-get install -y libx11-dev cmake g++
+
+      - name: Build Linux binary
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --parallel
+
+      - name: Package Linux binary
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          mkdir -p dist/SHITWAVE-v${VERSION}-linux-x86_64
+          cp build/shitwave dist/SHITWAVE-v${VERSION}-linux-x86_64/
+          tar -C dist -czf dist/SHITWAVE-v${VERSION}-linux-x86_64.tar.gz SHITWAVE-v${VERSION}-linux-x86_64
+
+      - name: Package web build
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          cp -r web dist/SHITWAVE-v${VERSION}-web
+          tar -C dist -czf dist/SHITWAVE-v${VERSION}-web.tar.gz SHITWAVE-v${VERSION}-web
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: SHITWAVE ${{ steps.version.outputs.tag }}
+          body: |
+            SHITWAVE release.
+
+            - Linux binary: `SHITWAVE-${{ steps.version.outputs.tag }}-linux-x86_64.tar.gz`
+            - Static web build: `SHITWAVE-${{ steps.version.outputs.tag }}-web.tar.gz`
+          files: |
+            dist/SHITWAVE-${{ steps.version.outputs.tag }}-linux-x86_64.tar.gz
+            dist/SHITWAVE-${{ steps.version.outputs.tag }}-web.tar.gz

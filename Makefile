@@ -4,7 +4,7 @@ LDFLAGS ?= -lX11
 
 all: shitwave
 
-shitwave: src/main.cpp
+shitwave: source/main.cpp
 	$(CXX) $(CXXFLAGS) -o $@ $< $(LDFLAGS)
 
 run: shitwave

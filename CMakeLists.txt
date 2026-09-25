@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(X11 REQUIRED)
 
-add_executable(shitwave src/main.cpp)
+add_executable(shitwave source/main.cpp)
 target_include_directories(shitwave PRIVATE ${X11_INCLUDE_DIR})
 target_link_libraries(shitwave PRIVATE ${X11_LIBRARIES})
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
