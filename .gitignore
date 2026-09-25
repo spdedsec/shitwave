@@ -1,0 +1,4 @@
+shitwave
+build/
+*.o
+.DS_Store
